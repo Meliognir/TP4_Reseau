@@ -32,31 +32,39 @@ int main() {
     }
     printf("Sémaphores récupérés avec succès. ID: %d\n", semid);
 
+
     if ((seg = (segment *)shmat(shmid, NULL, 0666)) == (segment *)-1) {
         perror("Erreur lors de l'attachement du segment mémoire");
         exit(1);
     }
 
     for (int req = 0; req < 10; req++) {
-        wait_sem(semid, seg_dispo);
+        acq_sem(semid, seg_dispo);
+        //wait_sem(semid, seg_dispo);
 
         seg->pid = getpid();
         seg->req = req;
+        long mean = 0;
+        long value;
         for (int i = 0; i < maxval; i++) {
-            seg->tab[i] = getrand();
+            value = getrand();
+
+            seg->tab[i] = value;
+            mean += value;
         }
-
+        mean = mean / maxval;
         lib_sem(semid, seg_init);
-
+        acq_sem(semid, res_ok);
         wait_sem(semid, res_ok); // Attente du résultat calculé par le serveur
 
         printf("Requête %d : Résultat calculé par le serveur : %ld\n", req, seg->result);
+        printf("Requête %d : Résultat calculé par le client : %ld\n", req, mean);
 
         lib_sem(semid, seg_init); // Libérer seg_init pour indiquer que le résultat a été lu
         lib_sem(semid, res_ok);   // Libérer res_ok pour le serveur
         lib_sem(semid, seg_dispo); // Libérer seg_dispo pour le serveur
 
-        sleep(1);
+        sleep(1); // Attend la libération de res_ok
     }
 
 
