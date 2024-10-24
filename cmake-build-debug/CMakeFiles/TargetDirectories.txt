@@ -1,0 +1,3 @@
+/home/trias/Bureau/TP4_Reseau/TP4/cmake-build-debug/CMakeFiles/TP4.dir
+/home/trias/Bureau/TP4_Reseau/TP4/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/trias/Bureau/TP4_Reseau/TP4/cmake-build-debug/CMakeFiles/rebuild_cache.dir
