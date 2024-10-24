@@ -1,6 +1,7 @@
 //
 // Created by trias on 24/10/24.
 //
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
@@ -19,19 +20,19 @@ int main() {
 
     printf("Tentative de récupération du segment de mémoire et des sémaphores avec clé: %d\n", cle);
 
-    if ((shmid = shmget(cle, segsize, 0666)) == -1) {
+    if ((shmid = shmget(cle, 0, 0)) == -1) {
         perror("Erreur lors de la récupération du segment mémoire");
         exit(1);
     }
     printf("Segment mémoire récupéré avec succès. ID: %d\n", shmid);
 
-    if ((semid = semget(cle, 3, 0666)) == -1) {
+    if ((semid = semget(cle, 3, 0)) == -1) {
         perror("Erreur lors de la récupération des sémaphores");
         exit(1);
     }
     printf("Sémaphores récupérés avec succès. ID: %d\n", semid);
 
-    if ((seg = (segment *)shmat(shmid, NULL, 0)) == (segment *)-1) {
+    if ((seg = (segment *)shmat(shmid, NULL, 0666)) == (segment *)-1) {
         perror("Erreur lors de l'attachement du segment mémoire");
         exit(1);
     }
