@@ -18,6 +18,10 @@ int main() {
     // Initialisation du générateur de nombres aléatoires
     init_rand();
 
+    // ---------------------------------------------
+    // ---------------  STEP 0  --------------------
+    // ---------------------------------------------
+
     printf("Tentative de récupération du segment de mémoire et des sémaphores avec clé: %d\n", cle);
 
     if ((shmid = shmget(cle, 0, 0)) == -1) {
@@ -33,36 +37,73 @@ int main() {
     printf("Sémaphores récupérés avec succès. ID: %d\n", semid);
 
 
-    if ((seg = (segment *)shmat(shmid, NULL, 0666)) == (segment *)-1) {
+    if ((seg = (segment *)shmat(shmid, NULL, 0)) == (segment *)-1) {
         perror("Erreur lors de l'attachement du segment mémoire");
         exit(1);
     }
 
     for (int req = 0; req < 10; req++) {
+
+    // ---------------------------------------------
+    // ---------------  STEP 1  --------------------
+    // ---------------------------------------------
+
         acq_sem(semid, seg_dispo);
         //wait_sem(semid, seg_dispo);
 
+    // ---------------------------------------------
+    // ---------------  STEP 2  --------------------
+    // ---------------------------------------------
+
         seg->pid = getpid();
         seg->req = req;
-        long mean = 0;
+        long clientRes = 0;
         long value;
         for (int i = 0; i < maxval; i++) {
-            value = getrand();
-
+            value = getrand()%1000;
             seg->tab[i] = value;
-            mean += value;
+            clientRes += value;
         }
-        mean = mean / maxval;
-        lib_sem(semid, seg_init);
-        acq_sem(semid, res_ok);
+        clientRes = clientRes / maxval;
+
+    // ---------------------------------------------
+    // ---------------  STEP 3  --------------------
+    // ---------------------------------------------
+
+        acq_sem(semid, seg_init);
+    
+    // ---------------------------------------------
+    // ---------------  STEP 4  --------------------
+    // ---------------------------------------------
+        
         wait_sem(semid, res_ok); // Attente du résultat calculé par le serveur
+        long serverRes = seg->result;
+        lib_sem(semid, seg_init);
 
-        printf("Requête %d : Résultat calculé par le serveur : %ld\n", req, seg->result);
-        printf("Requête %d : Résultat calculé par le client : %ld\n", req, mean);
-
-        lib_sem(semid, seg_init); // Libérer seg_init pour indiquer que le résultat a été lu
+    // ---------------------------------------------
+    // ---------------  STEP 5  --------------------
+    // ---------------------------------------------
+        
+        acq_sem(semid, res_ok);
         lib_sem(semid, res_ok);   // Libérer res_ok pour le serveur
+
+    // ---------------------------------------------
+    // ---------------  STEP 6  --------------------
+    // ---------------------------------------------
+        
         lib_sem(semid, seg_dispo); // Libérer seg_dispo pour le serveur
+
+    // ---------------------------------------------
+    // ---------------  STEP 7  --------------------
+    // ---------------------------------------------
+        
+        printf("Requête %d : Résultat calculé par le serveur : %ld\n", req, serverRes);
+        printf("Requête %d : Résultat calculé par le client : %ld\n", req, clientRes);
+
+
+    // ---------------------------------------------
+    // ---------------  STEP 8  --------------------
+    // ---------------------------------------------
 
         sleep(1); // Attend la libération de res_ok
     }
